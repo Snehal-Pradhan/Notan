@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.png" width="60%" alt="Notan" />
+  <img src="public/logo.png" width="30%" alt="Notan" />
 </p>
 
 <p align="center">
@@ -585,7 +585,7 @@ Internal proprietary software. Copyright © 2026 Notan Dev. All rights reserved.
 <br />
 
 <p align="center">
-  <img src="public/icon.png" width="10%" alt="Notan icon" />
+  <img src="public/icon.png" width="5%" alt="Notan icon" />
 </p>
 
 <p align="center">
