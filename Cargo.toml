@@ -1,0 +1,26 @@
+[package]
+name = "notan"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.88"
+description = "Offline spec workspace for AI-assisted development on macOS"
+
+[dependencies]
+eframe = { version = "0.33", default-features = false, features = [
+    "glow",
+    "default_fonts",
+    "accesskit",
+] }
+pulldown-cmark = { version = "0.13", default-features = false }
+
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+
+[dev-dependencies]
+egui_kittest = { version = "0.33", features = ["wgpu", "snapshot"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
