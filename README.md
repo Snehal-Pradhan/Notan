@@ -280,7 +280,7 @@ Only `png`, `jpeg`, `webp`, and `gif` up to 12 MB are rendered. HTTP images are 
 - Built with [Rust](https://www.rust-lang.org/) and [egui](https://www.egui.rs/).
 
 <p align="center">
-  <img src="public/logo.png" width="5%" alt="Notan" />
+  <img src="public/icon.png" width="5%" alt="Notan" />
 </p>
 
 <p align="center">
