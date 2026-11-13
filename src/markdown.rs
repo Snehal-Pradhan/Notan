@@ -631,6 +631,12 @@ pub enum Action {
 
 /// Draw the document. Returns the action requested by a click, if any.
 pub fn show(ui: &mut Ui, blocks: &[Block], base: Option<&std::path::Path>) -> Option<Action> {
+    let preview = FontFamily::Name("preview".into());
+    let family = if ui.ctx().fonts(|fonts| fonts.families().contains(&preview)) {
+        preview
+    } else {
+        FontFamily::Proportional
+    };
     let mut action = None;
     let mut tasks = 0;
     let mut index = 0;
@@ -641,11 +647,11 @@ pub fn show(ui: &mut Ui, blocks: &[Block], base: Option<&std::path::Path>) -> Op
             while index < blocks.len() && blocks[index].quote() == quote {
                 index += 1;
             }
-            if let Some(next) = quote_group(ui, &blocks[start..index], &mut tasks, base) {
+            if let Some(next) = quote_group(ui, &blocks[start..index], &mut tasks, base, &family) {
                 action = Some(next);
             }
         } else {
-            if let Some(next) = block_ui(ui, &blocks[index], index, &mut tasks, base) {
+            if let Some(next) = block_ui(ui, &blocks[index], index, &mut tasks, base, &family) {
                 action = Some(next);
             }
             index += 1;
@@ -660,6 +666,7 @@ fn block_ui(
     index: usize,
     tasks: &mut usize,
     base: Option<&std::path::Path>,
+    family: &FontFamily,
 ) -> Option<Action> {
     match block {
         Block::Heading {
@@ -668,7 +675,7 @@ fn block_ui(
             color,
             ..
         } => {
-            heading(ui, *level, spans, index == 0, *color);
+            heading(ui, *level, spans, index == 0, *color, family);
             None
         }
         Block::Text {
@@ -685,7 +692,7 @@ fn block_ui(
                 }
                 _ => None,
             };
-            text_block(ui, spans, *indent, marker.as_ref(), 0, task)
+            text_block(ui, spans, *indent, marker.as_ref(), 0, task, family)
         }
         Block::Code {
             lang, text, tokens, ..
@@ -699,7 +706,7 @@ fn block_ui(
             None
         }
         Block::Table { head, rows, .. } => {
-            table(ui, head, rows);
+            table(ui, head, rows, family);
             None
         }
     }
@@ -712,6 +719,7 @@ fn quote_group(
     group: &[Block],
     tasks: &mut usize,
     base: Option<&std::path::Path>,
+    family: &FontFamily,
 ) -> Option<Action> {
     let (label, body) = split_callout(group);
     let mut action = None;
@@ -735,7 +743,7 @@ fn quote_group(
                 ui.add_space(1.0);
             }
             for (index, block) in body.iter().enumerate() {
-                if let Some(next) = block_ui(ui, block, index, tasks, base) {
+                if let Some(next) = block_ui(ui, block, index, tasks, base, family) {
                     action = Some(next);
                 }
             }
@@ -804,6 +812,7 @@ fn heading(
     spans: &[Span],
     first: bool,
     color: Option<Color32>,
+    family: &FontFamily,
 ) {
     let (size, top, bottom) = match level {
         1 => (23.0, 22.0, 10.0),
@@ -813,7 +822,7 @@ fn heading(
     };
     ui.add_space(if first { 0.0 } else { top });
     let width = ui.available_width();
-    let job = job(spans, size, color.unwrap_or(theme::TEXT_BRIGHT), width);
+    let job = job(spans, size, color.unwrap_or(theme::TEXT_BRIGHT), width, family);
     ui.add(Label::new(job).selectable(true));
     ui.add_space(bottom);
 }
@@ -825,6 +834,7 @@ fn text_block(
     marker: Option<&Marker>,
     quote: usize,
     task: Option<usize>,
+    family: &FontFamily,
 ) -> Option<Action> {
     if spans.is_empty() && marker.is_none() {
         return None;
@@ -911,7 +921,7 @@ fn text_block(
                         egui::pos2(rect.right() - 2.0, rect.center().y),
                         Align2::RIGHT_CENTER,
                         format!("{n}."),
-                        preview_font(14.0),
+                        FontId::new(14.0, family.clone()),
                         theme::DIM,
                     );
                 }
@@ -919,7 +929,7 @@ fn text_block(
         }
 
         let ranges = link_ranges(spans);
-        let job = job(spans, theme::BODY_SIZE, theme::TEXT, width);
+        let job = job(spans, theme::BODY_SIZE, theme::TEXT, width, family);
         let galley = ui.painter().layout_job(job);
         let response = ui.add(
             Label::new(galley.clone())
@@ -1139,7 +1149,7 @@ fn rule(ui: &mut Ui) {
     ui.add_space(10.0);
 }
 
-fn table(ui: &mut Ui, head: &[Vec<Span>], rows: &[Vec<Vec<Span>>]) {
+fn table(ui: &mut Ui, head: &[Vec<Span>], rows: &[Vec<Vec<Span>>], family: &FontFamily) {
     let columns = head
         .first()
         .map(Vec::len)
@@ -1159,7 +1169,7 @@ fn table(ui: &mut Ui, head: &[Vec<Span>], rows: &[Vec<Vec<Span>>]) {
         .spacing([gap, 7.0])
         .show(ui, |ui| {
             for cell in head {
-                let job = job(cell, 13.0, theme::TEXT_BRIGHT, cell_width);
+                let job = job(cell, 13.0, theme::TEXT_BRIGHT, cell_width, family);
                 let response = ui.add(Label::new(job).selectable(true));
                 if header_bottom.is_none() {
                     header_bottom = Some(response.rect.bottom());
@@ -1170,7 +1180,7 @@ fn table(ui: &mut Ui, head: &[Vec<Span>], rows: &[Vec<Vec<Span>>]) {
             }
             for row in rows {
                 for cell in row {
-                    let job = job(cell, 13.0, theme::TEXT, cell_width);
+                    let job = job(cell, 13.0, theme::TEXT, cell_width, family);
                     let response = ui.add(Label::new(job).selectable(true));
                     if body_top.is_none() {
                         body_top = Some(response.rect.top());
@@ -1208,15 +1218,17 @@ fn link_ranges(spans: &[Span]) -> Vec<(usize, usize, String)> {
     ranges
 }
 
-fn preview_font(size: f32) -> FontId {
-    FontId::new(size, FontFamily::Proportional)
-}
-
-fn job(spans: &[Span], size: f32, color: Color32, width: f32) -> LayoutJob {
+fn job(
+    spans: &[Span],
+    size: f32,
+    color: Color32,
+    width: f32,
+    family: &FontFamily,
+) -> LayoutJob {
     let mut job = LayoutJob::default();
     job.wrap.max_width = width;
     for span in spans {
-        let mut format = TextFormat::simple(preview_font(size), color);
+        let mut format = TextFormat::simple(FontId::new(size, family.clone()), color);
         if span.strong {
             format.color = theme::TEXT_BRIGHT;
         }

@@ -202,6 +202,12 @@ fn install_fonts(ctx: &egui::Context) {
         .or_default()
         .insert(0, "jetbrains_mono".to_owned());
 
+    fonts
+        .families
+        .entry(FontFamily::Proportional)
+        .or_default()
+        .insert(0, "jetbrains_mono".to_owned());
+
     if let Ok(bytes) = std::fs::read("/System/Library/Fonts/SFNS.ttf") {
         fonts
             .font_data
@@ -210,7 +216,7 @@ fn install_fonts(ctx: &egui::Context) {
             .families
             .entry(FontFamily::Proportional)
             .or_default()
-            .insert(0, "sf_text".to_owned());
+            .push("sf_text".to_owned());
     }
 
     if let Ok(bytes) = std::fs::read("/System/Library/Fonts/SFNSMono.ttf") {
@@ -223,6 +229,15 @@ fn install_fonts(ctx: &egui::Context) {
             .or_default()
             .push("sf_mono".to_owned());
     }
+
+    let mut preview = Vec::new();
+    if fonts.font_data.contains_key("sf_text") {
+        preview.push("sf_text".to_owned());
+    }
+    preview.push("jetbrains_mono".to_owned());
+    fonts
+        .families
+        .insert(FontFamily::Name("preview".into()), preview);
 
     ctx.set_fonts(fonts);
 }
