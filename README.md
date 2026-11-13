@@ -279,4 +279,10 @@ Only `png`, `jpeg`, `webp`, and `gif` up to 12 MB are rendered. HTTP images are 
 - [Tabler Icons](https://tabler.io/icons) for the interface icons.
 - Built with [Rust](https://www.rust-lang.org/) and [egui](https://www.egui.rs/).
 
-Internal use only.
+<p align="center">
+  <img src="public/logo.png" width="5%" alt="Notan" />
+</p>
+
+<p align="center">
+  <sub>Notan 1.0.0 · Internal use only</sub>
+</p>
